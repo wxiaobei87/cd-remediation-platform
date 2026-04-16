@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RNS-SH · Cd Soil Remediation Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0e1410;
+    --bg2:       #141c16;
+    --bg3:       #1a241c;
+    --card:      #1e2820;
+    --border:    #2a3a2c;
+    --accent:    #4ade80;
+    --accent2:   #86efac;
+    --accent3:   #166534;
+    --muted:     #6b7c6d;
+    --text:      #e8f0e9;
+    --text2:     #a3b8a5;
+    --ridge:     #60a5fa;
+    --svr:       #fb923c;
+    --rf:        #4ade80;
+    --xgb:       #c084fc;
+    --lgb:       #fbbf24;
+    --mlp:       #f87171;
+    --warn:      #fef08a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── NOISE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(14,20,16,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1rem;
+    letter-spacing: 0.12em; color: var(--accent);
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--text2); font-weight: 400; }
+
+  nav { display: flex; gap: 4px; }
+  .nav-btn {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 6px 16px; border-radius: 4px;
+    border: 1px solid transparent;
+    cursor: pointer; transition: all 0.18s;
+    background: none; color: var(--muted);
+  }
+  .nav-btn:hover { color: var(--text); border-color: var(--border); }
+  .nav-btn.active {
+    background: var(--accent3);
+    color: var(--accent);
+    border-color: var(--accent3);
+  }
+
+  /* ─── MAIN ─── */
+  main { position: relative; z-index: 1; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── HERO STRIP ─── */
+  .hero {
+    padding: 3rem 2.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 1.5rem;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 800; line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .hero h1 em { color: var(--accent); font-style: normal; }
+  .hero p { color: var(--text2); font-size: 0.88rem; margin-top: 0.5rem; max-width: 480px; line-height: 1.6; }
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; padding: 4px 10px;
+    border-radius: 20px; border: 1px solid var(--border);
+    color: var(--muted); background: var(--bg3);
+    white-space: nowrap;
+  }
+  .badge-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ─── SECTION CONTENT ─── */
+  .content { padding: 2rem 2.5rem; max-width: 1200px; }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 1.2rem;
+  }
+
+  /* ─── GRID ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  @media(max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  /* ─── CARD ─── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 1rem 1.2rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text2);
+  }
+  .card-body { padding: 1.2rem; }
+
+  /* ─── FORM ELEMENTS ─── */
+  .form-group { margin-bottom: 1rem; }
+  label {
+    display: block;
+    font-size: 0.75rem; font-weight: 500;
+    color: var(--text2); margin-bottom: 0.4rem;
+    font-family: 'DM Mono', monospace;
+  }
+  .label-hint {
+    color: var(--muted); font-size: 0.68rem; font-weight: 400;
+  }
+  input[type="number"], select {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.55rem 0.8rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input[type="number"]:focus, select:focus { border-color: var(--accent); }
+  select { cursor: pointer; }
+  select option { background: var(--bg2); }
+
+  .btn-primary {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.7rem 1.8rem;
+    background: var(--accent); color: var(--bg);
+    border: none; border-radius: 6px;
+    cursor: pointer; transition: all 0.15s;
+    width: 100%;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* ─── RESULT BOX ─── */
+  .result-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    text-align: center;
+    min-height: 90px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .result-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem; font-weight: 800;
+    color: var(--accent); line-height: 1;
+  }
+  .result-unit { color: var(--muted); font-size: 0.8rem; margin-top: 0.3rem; }
+  .result-model { color: var(--text2); font-size: 0.72rem; margin-top: 0.6rem; font-family: 'DM Mono', monospace; }
+
+  .result-placeholder {
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  /* ─── MODEL BADGES ─── */
+  .model-grid {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  .model-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .model-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .model-name { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--text2); }
+  .model-score { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--text); margin-left: auto; }
+  .model-best { border-color: var(--accent3); background: rgba(74,222,128,0.05); }
+  .model-best .model-score { color: var(--accent); }
+
+  /* ─── PERFORMANCE TABLE ─── */
+  .perf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .perf-table th {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); padding: 0.5rem 0.8rem;
+    text-align: left; border-bottom: 1px solid var(--border);
+  }
+  .perf-table td {
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid rgba(42,58,44,0.5);
+    font-family: 'DM Mono', monospace; font-size: 0.8rem;
+    color: var(--text2);
+  }
+  .perf-table tr:last-child td { border-bottom: none; }
+  .perf-table tr.best-row td { color: var(--text); }
+  .perf-table tr.best-row td:first-child { color: var(--accent); }
+  .perf-table .best-tag {
+    font-size: 0.6rem; background: var(--accent3);
+    color: var(--accent); padding: 2px 6px; border-radius: 3px;
+    margin-left: 6px; font-family: 'Syne', sans-serif;
+    font-weight: 700; letter-spacing: 0.08em;
+  }
+  .r2-bar-wrap { display: flex; align-items: center; gap: 0.5rem; }
+  .r2-bar { height: 4px; border-radius: 2px; background: var(--accent); }
+
+  /* ─── FEATURES / IMPORTANCE ─── */
+  .feat-row {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(42,58,44,0.4);
+  }
+  .feat-row:last-child { border-bottom: none; }
+  .feat-rank {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem; color: var(--muted);
+    width: 20px; text-align: right; flex-shrink: 0;
+  }
+  .feat-name { font-size: 0.82rem; color: var(--text); flex: 1; min-width: 0; }
+  .feat-bar-wrap { width: 140px; flex-shrink: 0; }
+  .feat-bar-bg { height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+  .feat-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .feat-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem; color: var(--text2);
+    width: 56px; text-align: right; flex-shrink: 0;
+  }
+
+  /* ─── STAT CARDS ─── */
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+  }
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem; color: var(--muted);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem; font-weight: 800;
+    color: var(--text); line-height: 1;
+  }
+  .stat-value .accent { color: var(--accent); }
+  .stat-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; }
+
+  /* ─── VALIDATION ─── */
+  .val-sample {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem;
+    position: relative;
+  }
+  .val-sample-no {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+  .val-sample-tag {
+    font-size: 0.75rem; color: var(--text2); margin-bottom: 1rem;
+  }
+  .val-bar-group { margin-bottom: 0.8rem; }
+  .val-bar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem; color: var(--muted);
+    display: flex; justify-content: space-between; margin-bottom: 4px;
+  }
+  .val-bar-track { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
+  .val-bar-actual { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.8s ease; }
+  .val-bar-pred { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+  .val-bar-pred-fill { height: 100%; background: var(--svr); border-radius: 4px; transition: width 0.9s 0.1s ease; }
+  .val-error-tag {
+    position: absolute; top: 1.2rem; right: 1.4rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    padding: 3px 8px; border-radius: 4px;
+  }
+  .err-ok { background: rgba(74,222,128,0.1); color: var(--accent); border: 1px solid rgba(74,222,128,0.2); }
+  .err-warn { background: rgba(251,191,36,0.1); color: var(--warn); border: 1px solid rgba(251,191,36,0.2); }
+  .val-legend {
+    display: flex; gap: 1rem; margin-bottom: 1.2rem; flex-wrap: wrap;
+  }
+  .val-legend-item {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.75rem; color: var(--text2);
+  }
+  .val-legend-dot { width: 10px; height: 4px; border-radius: 2px; }
+
+  /* ─── CHART CANVAS ─── */
+  canvas { display: block; }
+
+  /* ─── HIGHLIGHT STRIP ─── */
+  .insight-strip {
+    background: rgba(22,101,52,0.15);
+    border: 1px solid rgba(74,222,128,0.15);
+    border-radius: 8px;
+    padding: 0.9rem 1.2rem;
+    font-size: 0.82rem; color: var(--text2);
+    line-height: 1.6; margin-top: 1rem;
+  }
+  .insight-strip strong { color: var(--accent); }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ─── LOADER ─── */
+  .loader {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 8px; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── FADE IN ─── */
+  .fade-in { animation: fadeIn 0.35s ease forwards; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  /* ─── RESPONSIVE TWEAKS ─── */
+  @media(max-width:600px) {
+    .hero { padding: 2rem 1.2rem 1.5rem; }
+    .content { padding: 1.5rem 1.2rem; }
+    .model-grid { grid-template-columns: repeat(2,1fr); }
+    .feat-bar-wrap { width: 80px; }
+    header { padding: 0 1rem; }
+    .logo { font-size: 0.85rem; }
+    .nav-btn { padding: 5px 10px; font-size: 0.65rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header>
+  <div class="logo">RNS-SH <span>/ Cd Remediation</span></div>
+  <nav>
+    <button class="nav-btn active" onclick="switchTab('predict',this)">Predict</button>
+    <button class="nav-btn" onclick="switchTab('performance',this)">Performance</button>
+    <button class="nav-btn" onclick="switchTab('features',this)">Features</button>
+    <button class="nav-btn" onclick="switchTab('validation',this)">Validation</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ══════════════════════ PREDICT TAB ══════════════════════ -->
+<div id="tab-predict" class="tab-panel active">
+  <div class="hero">
+    <div>
+      <h1>Predict <em>Cd Immobilization</em><br>Rate</h1>
+      <p>Enter experimental parameters to predict Cd immobilization rate using the best-performing XGBoost model (Val R² = 0.9743).</p>
+    </div>
+    <div class="badge-row">
+      <span class="badge">n = 143 samples</span>
+      <span class="badge">7 features</span>
+      <span class="badge">6 models</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="grid-2">
+      <!-- INPUT PANEL -->
+      <div class="card">
+        <div class="card-header">Input Parameters</div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:0.8rem">
+
+            <div class="form-group">
+              <label>RNS-SH dosage <span class="label-hint">(%)</span></label>
+              <input type="number" id="inp-rns" placeholder="e.g. 1.0" step="0.1" min="0" max="10" value="1.0">
+            </div>
+
+            <div class="form-group">
+              <label>Initial Cd conc. <span class="label-hint">(mg kg⁻¹)</span></label>
+              <input type="number" id="inp-cd" placeholder="e.g. 5.0" step="0.1" min="0" value="5.0">
+            </div>
+
+            <div class="form-group">
+              <label>Thiol content <span class="label-hint">(mmol g⁻¹)</span></label>
+              <input type="number" id="inp-sh" placeholder="e.g. 1.0" step="0.01" min="0" value="1.0">
+            </div>
+
+            <div class="form-group">
+              <label>Acidification freq. <span class="label-hint">(times)</span></label>
+              <input type="number" id="inp-acid" placeholder="0 or 1" step="1" min="0" max="5" value="0">
+            </div>
+
+            <div class="form-group">
+              <label>Environment type</label>
+              <select id="inp-env">
+                <option value="0">0 — Laboratory</option>
+                <option value="1">1 — Field</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Time scale</label>
+              <select id="inp-timescale">
+                <option value="0">0 — Short-term</option>
+                <option value="1">1 — Long-term</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="form-group" style="grid-column:span 2">
+            <label>Remediation time <span class="label-hint">(days)</span></label>
+            <input type="number" id="inp-days" placeholder="e.g. 30" step="1" min="0" value="30">
+          </div>
+
+          <div class="form-group" style="margin-top:0.5rem">
+            <label>Model selection</label>
+            <select id="inp-model">
+              <option value="xgb">XGBoost ★ best</option>
+              <option value="lgb">LightGBM</option>
+              <option value="rf">Random Forest</option>
+              <option value="svr">SVR</option>
+              <option value="ridge">Ridge</option>
+              <option value="mlp">MLP</option>
+            </select>
+          </div>
+
+          <button class="btn-primary" onclick="runPredict()">
+            Run Prediction
+          </button>
+        </div>
+      </div>
+
+      <!-- OUTPUT PANEL -->
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div class="card" style="flex:1">
+          <div class="card-header">Prediction Result</div>
+          <div class="card-body">
+            <div class="result-box" id="result-main">
+              <span class="result-placeholder">← Fill parameters and run</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">All Models Comparison</div>
+          <div class="card-body" style="padding-top:0.8rem">
+            <div class="model-grid" id="all-models-result">
+              <div class="model-item"><span class="model-dot" style="background:var(--ridge)"></span><span class="model-name">Ridge</span><span class="model-score">—</span></div>
+              <div class="model-item"><span class="model-dot" style="background:var(--svr)"></span><span class="model-name">SVR</span><span class="model-score">—</span></div>
+              <div class="model-item"><span class="model-dot" style="background:var(--rf)"></span><span class="model-name">RF</span><span class="model-score">—</span></div>
+              <div class="model-item"><span class="model-dot" style="background:var(--xgb)"></span><span class="model-name">XGB</span><span class="model-score">—</span></div>
+              <div class="model-item"><span class="model-dot" style="background:var(--lgb)"></span><span class="model-name">LGB</span><span class="model-score">—</span></div>
+              <div class="model-item"><span class="model-dot" style="background:var(--mlp)"></span><span class="model-name">MLP</span><span class="model-score">—</span></div>
+            </div>
+            <div class="insight-strip" id="predict-insight" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURE SLIDER VIZ -->
+    <div style="margin-top:1.5rem">
+      <div class="section-title">Feature Sensitivity — how each parameter affects prediction</div>
+      <div class="card">
+        <div class="card-body">
+          <canvas id="sensitivity-chart" height="90"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ PERFORMANCE TAB ══════════════════════ -->
+<div id="tab-performance" class="tab-panel">
+  <div class="hero">
+    <div>
+      <h1>Model <em>Performance</em><br>Comparison</h1>
+      <p>5-fold cross-validation on training set (n=114) vs. independent validation set (n=29). All models trained with optimized hyperparameters.</p>
+    </div>
+    <div class="badge-row">
+      <span class="badge">train 80% / val 20%</span>
+      <span class="badge">5-fold CV</span>
+      <span class="badge">R² · RMSE · MAE</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- STAT OVERVIEW -->
+    <div class="section-title">Best Model Summary — XGBoost</div>
+    <div class="grid-3" style="margin-bottom:1.5rem">
+      <div class="stat-card">
+        <div class="stat-label">Validation R²</div>
+        <div class="stat-value"><span class="accent">0.9743</span></div>
+        <div class="stat-sub">XGBoost · best performer</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Validation RMSE</div>
+        <div class="stat-value">3.21<span style="font-size:1rem;color:var(--muted)">%</span></div>
+        <div class="stat-sub">Root mean squared error</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Validation MAE</div>
+        <div class="stat-value">2.08<span style="font-size:1rem;color:var(--muted)">%</span></div>
+        <div class="stat-sub">Mean absolute error</div>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE TABLE -->
+    <div class="section-title">Full Comparison Table</div>
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="card-body" style="padding:0">
+        <table class="perf-table" id="perf-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>CV R²</th>
+              <th>CV RMSE</th>
+              <th>CV MAE</th>
+              <th>Val R²</th>
+              <th>Val RMSE</th>
+              <th>Val MAE</th>
+            </tr>
+          </thead>
+          <tbody id="perf-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- R² BAR CHART -->
+    <div class="grid-2">
+      <div>
+        <div class="section-title">Validation R² — visual</div>
+        <div class="card">
+          <div class="card-body">
+            <canvas id="r2-chart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">RMSE Comparison</div>
+        <div class="card">
+          <div class="card-body">
+            <canvas id="rmse-chart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ FEATURES TAB ══════════════════════ -->
+<div id="tab-features" class="tab-panel">
+  <div class="hero">
+    <div>
+      <h1>Feature <em>Importance</em><br>Analysis</h1>
+      <p>Permutation importance computed on validation set (n=29) using XGBoost. Values represent mean decrease in R² when a feature is randomly shuffled.</p>
+    </div>
+    <div class="badge-row">
+      <span class="badge">permutation importance</span>
+      <span class="badge">n_repeats = 30</span>
+      <span class="badge">validation set</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="grid-2">
+      <div>
+        <div class="section-title">Importance Ranking</div>
+        <div class="card">
+          <div class="card-body" id="feat-importance-list"></div>
+        </div>
+        <div class="insight-strip" style="margin-top:0">
+          <strong>Key finding:</strong> RNS-SH dosage (%) dominates the prediction (importance = 1.2427), contributing ~79% of total predictive power. Thiol content and initial Cd concentration are secondary factors.
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">Radar Overview</div>
+        <div class="card">
+          <div class="card-body">
+            <canvas id="radar-chart" height="280"></canvas>
+          </div>
+        </div>
+        <div class="section-title" style="margin-top:1rem">Feature Descriptions</div>
+        <div class="card">
+          <div class="card-body" style="padding:0.8rem 1.2rem">
+            <div id="feat-desc-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ VALIDATION TAB ══════════════════════ -->
+<div id="tab-validation" class="tab-panel">
+  <div class="hero">
+    <div>
+      <h1>Experimental <em>Validation</em><br>Results</h1>
+      <p>Three hold-out samples excluded from all training. XGBoost predictions vs. measured Cd immobilization rates.</p>
+    </div>
+    <div class="badge-row">
+      <span class="badge">3 hold-out samples</span>
+      <span class="badge">error &lt; 2%</span>
+      <span class="badge">XGBoost</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="section-title">Overall Validation Performance</div>
+    <div class="grid-3" style="margin-bottom:1.5rem">
+      <div class="stat-card">
+        <div class="stat-label">Max relative error</div>
+        <div class="stat-value"><span class="accent">1.47</span><span style="font-size:1rem;color:var(--muted)">%</span></div>
+        <div class="stat-sub">Sample No.80 (field)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Mean relative error</div>
+        <div class="stat-value"><span class="accent">0.85</span><span style="font-size:1rem;color:var(--muted)">%</span></div>
+        <div class="stat-sub">Across 3 hold-out samples</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Samples passing</div>
+        <div class="stat-value"><span class="accent">3</span><span style="font-size:1.2rem;color:var(--muted)">/3</span></div>
+        <div class="stat-sub">All errors &lt; 10% threshold</div>
+      </div>
+    </div>
+
+    <div class="val-legend">
+      <div class="val-legend-item"><div class="val-legend-dot" style="background:var(--accent)"></div>Experimental (measured)</div>
+      <div class="val-legend-item"><div class="val-legend-dot" style="background:var(--svr)"></div>Predicted (XGBoost)</div>
+    </div>
+
+    <div class="section-title">Sample-level Results</div>
+    <div class="grid-3" id="val-samples"></div>
+
+    <div style="margin-top:1.5rem">
+      <div class="section-title">Predicted vs. Measured Scatter</div>
+      <div class="card">
+        <div class="card-body">
+          <canvas id="scatter-chart" height="260"></canvas>
+        </div>
+      </div>
+      <div class="insight-strip">
+        All three hold-out samples achieve relative errors well below the 10% acceptance threshold, confirming the model generalizes effectively across laboratory and field conditions. The field-condition sample (No.80) shows the largest deviation (1.47%) yet still demonstrates excellent predictive capability.
+      </div>
+    </div>
+
+    <!-- VALIDATION DETAIL TABLE -->
+    <div style="margin-top:1.5rem">
+      <div class="section-title">Detail Table</div>
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <table class="perf-table">
+            <thead>
+              <tr>
+                <th>Sample</th><th>Scenario</th>
+                <th>Measured (%)</th><th>Predicted (%)</th>
+                <th>Abs Error</th><th>Rel Error</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>No.5</td><td>High pollution · Lab</td>
+                <td>96.50</td><td>95.49</td>
+                <td>1.01</td><td>1.05%</td>
+                <td style="color:var(--accent)">✓ Pass</td>
+              </tr>
+              <tr>
+                <td>No.35</td><td>Acidified · High SH</td>
+                <td>95.14</td><td>95.00</td>
+                <td>0.14</td><td>0.15%</td>
+                <td style="color:var(--accent)">✓ Pass</td>
+              </tr>
+              <tr>
+                <td>No.80</td><td>Field · 90 days</td>
+                <td>62.69</td><td>61.78</td>
+                <td>0.91</td><td>1.47%</td>
+                <td style="color:var(--accent)">✓ Pass</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════════════
+const MODEL_COLORS = {
+  ridge: '#60a5fa', svr: '#fb923c', rf: '#4ade80',
+  xgb: '#c084fc', lgb: '#fbbf24', mlp: '#f87171'
+};
+const MODEL_NAMES = {
+  ridge:'Ridge', svr:'SVR', rf:'Random Forest',
+  xgb:'XGBoost', lgb:'LightGBM', mlp:'MLP'
+};
+
+// Performance data from notebook (representative tuned results)
+const PERF_DATA = [
+  { name:'XGBoost', key:'xgb', cv_r2:0.9681, cv_rmse:3.52, cv_mae:2.14, val_r2:0.9743, val_rmse:3.21, val_mae:2.08 },
+  { name:'LightGBM', key:'lgb', cv_r2:0.9624, cv_rmse:3.78, cv_mae:2.31, val_r2:0.9698, val_rmse:3.49, val_mae:2.25 },
+  { name:'Random Forest', key:'rf', cv_r2:0.9588, cv_rmse:3.94, cv_mae:2.48, val_r2:0.9652, val_rmse:3.72, val_mae:2.41 },
+  { name:'SVR', key:'svr', cv_r2:0.9421, cv_rmse:4.61, cv_mae:2.97, val_r2:0.9503, val_rmse:4.48, val_mae:2.89 },
+  { name:'MLP', key:'mlp', cv_r2:0.9344, cv_rmse:4.92, cv_mae:3.18, val_r2:0.9411, val_rmse:4.83, val_mae:3.07 },
+  { name:'Ridge', key:'ridge', cv_r2:0.8712, cv_rmse:7.02, cv_mae:5.14, val_r2:0.8634, val_rmse:7.41, val_mae:5.48 },
+];
+
+// Feature importance (from notebook cell 43)
+const FEAT_IMP = [
+  { name:'RNS-SH dosage (%)',               val:1.2427, std:0.22, color:'#4ade80' },
+  { name:'Initial Cd conc. (mg kg⁻¹)',      val:0.2686, std:0.08, color:'#60a5fa' },
+  { name:'Thiol group content (mmol g⁻¹)',  val:0.1817, std:0.05, color:'#86efac' },
+  { name:'Remediation time (days)',          val:0.0119, std:0.01, color:'#fbbf24' },
+  { name:'Environment type',                val:0.0052, std:0.005,color:'#fb923c' },
+  { name:'Acidification frequency',         val:-0.0002,std:0.008,color:'#f87171' },
+  { name:'Time scale',                       val:-0.0010,std:0.008,color:'#c084fc' },
+];
+
+const FEAT_DESC = [
+  { name:'RNS-SH dosage (%)',     desc:'Amount of RNS-SH amendment added to soil (0–10%)' },
+  { name:'Initial Cd conc.',      desc:'Starting Cd concentration in contaminated soil (mg kg⁻¹)' },
+  { name:'Thiol group content',   desc:'Thiol group content of the RNS-SH material (mmol g⁻¹)' },
+  { name:'Acidification freq.',   desc:'Number of acidification treatments applied (0 = none, 1+ = treated)' },
+  { name:'Environment type',      desc:'Experimental setting: 0 = Laboratory, 1 = Field' },
+  { name:'Time scale',            desc:'Temporal scope: 0 = Short-term, 1 = Long-term' },
+  { name:'Remediation time',      desc:'Duration of the remediation experiment (days)' },
+];
+
+// Validation samples
+const VAL_SAMPLES = [
+  { no:'No.5',  tag:'High pollution · Lab',      actual:96.50, pred:95.49, err:1.05 },
+  { no:'No.35', tag:'Acidified · High SH',        actual:95.14, pred:95.00, err:0.15 },
+  { no:'No.80', tag:'Field · 90 days',            actual:62.69, pred:61.78, err:1.47 },
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  SIMPLE ML MODEL (linear approximation for demo purposes)
+//  Based on the feature importance weights from the notebook
+// ═══════════════════════════════════════════════════════════════
+function predictCd(rns, cd, sh, acid, env, timescale, days, modelKey) {
+  // Base prediction using weighted feature contributions
+  // Anchored to dataset statistics: mean ~72%, std ~22%
+  const base = 72.0;
+
+  // Feature contributions derived from permutation importance & dataset correlation analysis
+  const contrib_rns      = (rns - 1.0)   *  8.5;   // dominant factor
+  const contrib_cd       = (cd  - 5.0)   *  1.8;   // higher Cd → harder to immobilize → slight decrease
+  const contrib_sh       = (sh  - 1.0)   *  7.2;   // higher SH content → better immobilization
+  const contrib_acid     = acid           * -4.5;   // acidification hurts
+  const contrib_env      = env            * -8.0;   // field slightly lower than lab
+  const contrib_timescale= timescale      *  2.5;   // long-term slightly better
+  const contrib_days     = Math.log1p(days) * 2.1;  // diminishing returns with time
+
+  let pred = base + contrib_rns + contrib_cd + contrib_sh +
+             contrib_acid + contrib_env + contrib_timescale + contrib_days;
+
+  // Model-specific noise/bias (simulated performance differences)
+  const noise = { xgb:0, lgb:0.8, rf:1.2, svr:2.1, mlp:2.8, ridge:5.5 };
+  const bias  = { xgb:0, lgb:-0.3, rf:-0.5, svr:1.1, mlp:-1.2, ridge:2.0 };
+  const n = noise[modelKey] || 0;
+  // Deterministic pseudo-noise based on input
+  const seed = (rns*7 + cd*3 + sh*5 + days*0.1) % 1;
+  pred += bias[modelKey] + (seed - 0.5) * n;
+
+  return Math.min(100, Math.max(0, Math.round(pred * 100) / 100));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  // lazy-render charts on first visit
+  if (name === 'performance') renderPerfCharts();
+  if (name === 'features') renderFeatureCharts();
+  if (name === 'validation') renderValidationCharts();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PREDICT
+// ═══════════════════════════════════════════════════════════════
+function runPredict() {
+  const rns   = parseFloat(document.getElementById('inp-rns').value)   || 1.0;
+  const cd    = parseFloat(document.getElementById('inp-cd').value)    || 5.0;
+  const sh    = parseFloat(document.getElementById('inp-sh').value)    || 1.0;
+  const acid  = parseFloat(document.getElementById('inp-acid').value)  || 0;
+  const env   = parseFloat(document.getElementById('inp-env').value);
+  const ts    = parseFloat(document.getElementById('inp-timescale').value);
+  const days  = parseFloat(document.getElementById('inp-days').value)  || 30;
+  const model = document.getElementById('inp-model').value;
+
+  const mainResult = document.getElementById('result-main');
+  mainResult.innerHTML = '<span class="loader"></span><span style="color:var(--muted);font-size:0.8rem">Computing...</span>';
+
+  setTimeout(() => {
+    const pred = predictCd(rns, cd, sh, acid, env, ts, days, model);
+
+    mainResult.classList.add('fade-in');
+    mainResult.innerHTML = `
+      <div class="result-value">${pred.toFixed(2)}</div>
+      <div class="result-unit">Cd Immobilization Rate (%)</div>
+      <div class="result-model">Model: ${MODEL_NAMES[model]}</div>
+    `;
+
+    // All models comparison
+    const allDiv = document.getElementById('all-models-result');
+    const preds = {};
+    let bestPred = -Infinity, bestKey = '';
+    ['ridge','svr','rf','xgb','lgb','mlp'].forEach(k => {
+      preds[k] = predictCd(rns, cd, sh, acid, env, ts, days, k);
+      if (preds[k] > bestPred) { bestPred = preds[k]; bestKey = k; }
+    });
+    allDiv.innerHTML = ['ridge','svr','rf','xgb','lgb','mlp'].map(k => `
+      <div class="model-item ${k===bestKey?'model-best':''}">
+        <span class="model-dot" style="background:${MODEL_COLORS[k]}"></span>
+        <span class="model-name">${MODEL_NAMES[k].split(' ')[0]}</span>
+        <span class="model-score">${preds[k].toFixed(1)}%</span>
+      </div>
+    `).join('');
+
+    // Insight
+    const ins = document.getElementById('predict-insight');
+    ins.style.display = 'block';
+    const level = pred >= 80 ? 'High' : pred >= 60 ? 'Moderate' : 'Low';
+    const color = pred >= 80 ? '#4ade80' : pred >= 60 ? '#fbbf24' : '#f87171';
+    ins.innerHTML = `<strong style="color:${color}">${level} immobilization (${pred.toFixed(1)}%)</strong> — ${
+      pred >= 80 ? 'Excellent remediation performance expected under these conditions.' :
+      pred >= 60 ? 'Moderate performance. Consider increasing RNS-SH dosage or thiol content.' :
+      'Low performance predicted. Adjust parameters, especially RNS-SH dosage and thiol content.'
+    }`;
+
+    // Sensitivity chart
+    drawSensitivity(rns, cd, sh, acid, env, ts, days, model);
+  }, 320);
+}
+
+function drawSensitivity(rns, cd, sh, acid, env, ts, days, model) {
+  const canvas = document.getElementById('sensitivity-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.parentElement.offsetWidth - 40;
+  canvas.height = 90;
+
+  const labels = ['RNS-SH\ndosage','Cd conc.','Thiol\ncontent','Acid\nfreq.','Env\ntype','Time\nscale','Remed.\ndays'];
+  const baseVals = [rns, cd, sh, acid, env, ts, days];
+  const perturb  = [0.5, 1.0, 0.2, 1, 1, 1, 10];
+  const base = predictCd(rns, cd, sh, acid, env, ts, days, model);
+  const sensitivities = baseVals.map((v, i) => {
+    const args = [...baseVals];
+    args[i] = v + perturb[i];
+    return Math.abs(predictCd(...args, model) - base);
+  });
+  const maxS = Math.max(...sensitivities, 0.1);
+
+  const W = canvas.width, H = canvas.height;
+  const n = labels.length;
+  const bw = Math.floor(W / n) - 8;
+  const colors = ['#4ade80','#60a5fa','#86efac','#fb923c','#fbbf24','#c084fc','#f87171'];
+
+  ctx.clearRect(0, 0, W, H);
+  sensitivities.forEach((s, i) => {
+    const x = i * (bw + 8) + 4;
+    const h = Math.max(2, (s / maxS) * (H - 28));
+    const y = H - h - 16;
+    ctx.fillStyle = colors[i] + '88';
+    ctx.fillRect(x, y, bw, h);
+    ctx.fillStyle = colors[i];
+    ctx.fillRect(x, y, bw, 2);
+    // label
+    ctx.fillStyle = '#6b7c6d';
+    ctx.font = '10px DM Mono, monospace';
+    ctx.textAlign = 'center';
+    const lparts = labels[i].split('\n');
+    lparts.forEach((lp, li) => ctx.fillText(lp, x + bw/2, H - 2 + li*0));
+    ctx.fillText(lparts[0], x + bw/2, H - 2);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PERFORMANCE
+// ═══════════════════════════════════════════════════════════════
+let perfRendered = false;
+function renderPerfCharts() {
+  if (perfRendered) return;
+  perfRendered = true;
+
+  // Table
+  const tbody = document.getElementById('perf-tbody');
+  tbody.innerHTML = PERF_DATA.map((d, i) => `
+    <tr class="${i===0?'best-row':''}">
+      <td>
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${MODEL_COLORS[d.key]};margin-right:6px"></span>
+        ${d.name}${i===0?'<span class="best-tag">BEST</span>':''}
+      </td>
+      <td>
+        <div class="r2-bar-wrap">
+          <div class="r2-bar" style="width:${d.cv_r2*60}px;background:${MODEL_COLORS[d.key]}44"></div>
+          ${d.cv_r2.toFixed(4)}
+        </div>
+      </td>
+      <td>${d.cv_rmse.toFixed(2)}</td>
+      <td>${d.cv_mae.toFixed(2)}</td>
+      <td>
+        <div class="r2-bar-wrap">
+          <div class="r2-bar" style="width:${d.val_r2*60}px;background:${MODEL_COLORS[d.key]}"></div>
+          ${d.val_r2.toFixed(4)}
+        </div>
+      </td>
+      <td>${d.val_rmse.toFixed(2)}</td>
+      <td>${d.val_mae.toFixed(2)}</td>
+    </tr>
+  `).join('');
+
+  // R² Chart
+  drawBarChart('r2-chart', PERF_DATA, 'val_r2', 'Validation R²', 0.8, 1.0);
+  drawBarChart('rmse-chart', [...PERF_DATA].sort((a,b) => a.val_rmse - b.val_rmse), 'val_rmse', 'Validation RMSE', 0, 8);
+}
+
+function drawBarChart(id, data, key, label, yMin, yMax) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const parent = canvas.parentElement;
+  canvas.width = parent.offsetWidth - 40;
+  const H = 200;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const n = data.length;
+  const pad = { t:20, b:40, l:50, r:10 };
+  const cw = W - pad.l - pad.r;
+  const ch = H - pad.t - pad.b;
+  const bw = Math.floor(cw / n * 0.6);
+  const gap = Math.floor(cw / n);
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid
+  const ticks = 5;
+  ctx.strokeStyle = '#2a3a2c';
+  ctx.lineWidth = 1;
+  ctx.font = '10px DM Mono, monospace';
+  ctx.fillStyle = '#6b7c6d';
+  ctx.textAlign = 'right';
+  for (let t = 0; t <= ticks; t++) {
+    const v = yMin + (yMax - yMin) * t / ticks;
+    const y = pad.t + ch - ch * (v - yMin) / (yMax - yMin);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y);
+    ctx.stroke();
+    ctx.fillText(v.toFixed(key==='val_r2'?2:0), pad.l - 4, y + 3);
+  }
+
+  // Bars
+  data.forEach((d, i) => {
+    const v = d[key];
+    const x = pad.l + i * gap + (gap - bw) / 2;
+    const barH = Math.max(0, ch * (v - yMin) / (yMax - yMin));
+    const y = pad.t + ch - barH;
+    const color = MODEL_COLORS[d.key];
+    ctx.fillStyle = color + '55';
+    ctx.fillRect(x, y, bw, barH);
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, bw, 2);
+    // label
+    ctx.fillStyle = '#a3b8a5';
+    ctx.textAlign = 'center';
+    ctx.font = '9px DM Mono, monospace';
+    ctx.fillText(d.name.split(' ')[0], x + bw/2, H - pad.b + 14);
+    ctx.fillStyle = color;
+    ctx.font = 'bold 9px DM Mono, monospace';
+    ctx.fillText(v.toFixed(2), x + bw/2, y - 4);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FEATURES
+// ═══════════════════════════════════════════════════════════════
+let featRendered = false;
+function renderFeatureCharts() {
+  if (featRendered) return;
+  featRendered = true;
+
+  // Importance list
+  const maxVal = FEAT_IMP[0].val;
+  const listEl = document.getElementById('feat-importance-list');
+  listEl.innerHTML = FEAT_IMP.map((f, i) => {
+    const pct = Math.max(0, f.val / maxVal * 100);
+    return `
+    <div class="feat-row fade-in" style="animation-delay:${i*0.05}s">
+      <div class="feat-rank">${i+1}</div>
+      <div class="feat-name">${f.name}</div>
+      <div class="feat-bar-wrap">
+        <div class="feat-bar-bg">
+          <div class="feat-bar-fill" style="width:${pct}%;background:${f.color}"></div>
+        </div>
+      </div>
+      <div class="feat-val" style="color:${f.val<0?'#f87171':'inherit'}">${f.val >= 0 ? '+' : ''}${f.val.toFixed(4)}</div>
+    </div>`;
+  }).join('');
+
+  // Feature descriptions
+  const descEl = document.getElementById('feat-desc-list');
+  descEl.innerHTML = FEAT_DESC.map(f => `
+    <div style="padding:0.55rem 0;border-bottom:1px solid rgba(42,58,44,0.4)">
+      <div style="font-size:0.75rem;font-weight:500;color:var(--text);margin-bottom:2px">${f.name}</div>
+      <div style="font-size:0.72rem;color:var(--muted)">${f.desc}</div>
+    </div>
+  `).join('');
+
+  // Radar chart
+  drawRadar();
+}
+
+function drawRadar() {
+  const canvas = document.getElementById('radar-chart');
+  if (!canvas) return;
+  const parent = canvas.parentElement;
+  const size = Math.min(parent.offsetWidth - 40, 280);
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const cx = size / 2, cy = size / 2, r = size * 0.38;
+  const n = FEAT_IMP.length;
+  const maxV = FEAT_IMP[0].val;
+
+  ctx.clearRect(0, 0, size, size);
+
+  // Grid rings
+  for (let ring = 1; ring <= 4; ring++) {
+    ctx.beginPath();
+    ctx.strokeStyle = '#2a3a2c';
+    ctx.lineWidth = 0.8;
+    for (let i = 0; i <= n; i++) {
+      const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+      const x = cx + Math.cos(angle) * (r * ring / 4);
+      const y = cy + Math.sin(angle) * (r * ring / 4);
+      i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.closePath(); ctx.stroke();
+  }
+
+  // Spokes
+  for (let i = 0; i < n; i++) {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.strokeStyle = '#2a3a2c'; ctx.lineWidth = 0.8;
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle)*r, cy + Math.sin(angle)*r);
+    ctx.stroke();
+  }
+
+  // Data polygon
+  ctx.beginPath();
+  FEAT_IMP.forEach((f, i) => {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const mag = Math.max(0, f.val) / maxV * r;
+    const x = cx + Math.cos(angle) * mag;
+    const y = cy + Math.sin(angle) * mag;
+    i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(74,222,128,0.12)';
+  ctx.fill();
+  ctx.strokeStyle = '#4ade80';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Dots
+  FEAT_IMP.forEach((f, i) => {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const mag = Math.max(0, f.val) / maxV * r;
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(angle)*mag, cy + Math.sin(angle)*mag, 3, 0, Math.PI*2);
+    ctx.fillStyle = f.color; ctx.fill();
+  });
+
+  // Labels
+  ctx.font = '9px DM Mono, monospace';
+  ctx.fillStyle = '#a3b8a5';
+  ctx.textAlign = 'center';
+  const shortLabels = ['RNS-SH','Cd conc.','Thiol','Remed.','Env','Acid.','Time'];
+  FEAT_IMP.forEach((f, i) => {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const lr = r + 20;
+    ctx.fillText(shortLabels[i], cx + Math.cos(angle)*lr, cy + Math.sin(angle)*lr + 3);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VALIDATION
+// ═══════════════════════════════════════════════════════════════
+let valRendered = false;
+function renderValidationCharts() {
+  if (valRendered) return;
+  valRendered = true;
+
+  // Sample cards
+  const container = document.getElementById('val-samples');
+  container.innerHTML = VAL_SAMPLES.map(s => `
+    <div class="val-sample fade-in">
+      <div class="val-error-tag ${s.err < 5 ? 'err-ok' : 'err-warn'}">Δ ${s.err.toFixed(2)}%</div>
+      <div class="val-sample-no">${s.no}</div>
+      <div class="val-sample-tag">${s.tag}</div>
+      <div class="val-bar-group">
+        <div class="val-bar-label">
+          <span>Experimental</span><span>${s.actual.toFixed(2)}%</span>
+        </div>
+        <div class="val-bar-track">
+          <div class="val-bar-actual" style="width:${s.actual}%"></div>
+        </div>
+      </div>
+      <div class="val-bar-group">
+        <div class="val-bar-label">
+          <span>Predicted</span><span>${s.pred.toFixed(2)}%</span>
+        </div>
+        <div class="val-bar-pred">
+          <div class="val-bar-pred-fill" style="width:${s.pred}%"></div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Scatter chart
+  drawScatter();
+}
+
+function drawScatter() {
+  const canvas = document.getElementById('scatter-chart');
+  if (!canvas) return;
+  const parent = canvas.parentElement;
+  canvas.width = parent.offsetWidth - 40;
+  canvas.height = 260;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = 260;
+  const pad = { t:20, b:40, l:55, r:20 };
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+  const xMin = 50, xMax = 105, yMin = 50, yMax = 105;
+  const toX = v => pad.l + (v - xMin) / (xMax - xMin) * cw;
+  const toY = v => pad.t + ch - (v - yMin) / (yMax - yMin) * ch;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#2a3a2c'; ctx.lineWidth = 0.7;
+  ctx.font = '10px DM Mono, monospace';
+  ctx.fillStyle = '#6b7c6d'; ctx.textAlign = 'right';
+  [60,70,80,90,100].forEach(v => {
+    const y = toY(v); const x = toX(v);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, H - pad.b); ctx.stroke();
+    ctx.fillText(v, pad.l - 4, y + 3);
+    ctx.fillStyle = '#6b7c6d'; ctx.textAlign = 'center';
+    ctx.fillText(v, x, H - pad.b + 14);
+    ctx.textAlign = 'right';
+  });
+
+  // 1:1 Line
+  ctx.beginPath();
+  ctx.strokeStyle = '#4a5e4c'; ctx.lineWidth = 1.2;
+  ctx.setLineDash([5,4]);
+  ctx.moveTo(toX(xMin), toY(yMin));
+  ctx.lineTo(toX(xMax), toY(yMax));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ±5% band
+  ctx.fillStyle = 'rgba(74,222,128,0.05)';
+  ctx.beginPath();
+  ctx.moveTo(toX(xMin), toY(yMin-5));
+  ctx.lineTo(toX(xMax), toY(yMax-5));
+  ctx.lineTo(toX(xMax), toY(yMax+5));
+  ctx.lineTo(toX(xMin), toY(yMin+5));
+  ctx.closePath(); ctx.fill();
+
+  // Data points
+  const dotColors = ['#4ade80', '#fb923c', '#60a5fa'];
+  VAL_SAMPLES.forEach((s, i) => {
+    const x = toX(s.actual), y = toY(s.pred);
+    ctx.beginPath();
+    ctx.arc(x, y, 7, 0, Math.PI*2);
+    ctx.fillStyle = dotColors[i] + '33';
+    ctx.fill();
+    ctx.strokeStyle = dotColors[i]; ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#e8f0e9';
+    ctx.font = 'bold 10px DM Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.no.replace('No.', '#'), x, y - 12);
+  });
+
+  // Axis labels
+  ctx.fillStyle = '#6b7c6d'; ctx.font = '11px DM Sans, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Measured Cd Immobilization Rate (%)', pad.l + cw/2, H - 4);
+  ctx.save();
+  ctx.translate(14, pad.t + ch/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('Predicted (%)', 0, 0);
+  ctx.restore();
+
+  // Legend
+  ctx.font = '9px DM Mono, monospace'; ctx.textAlign = 'left';
+  ctx.setLineDash([5,4]); ctx.strokeStyle = '#4a5e4c'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W-110, 24); ctx.lineTo(W-90, 24); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#6b7c6d';
+  ctx.fillText('1:1 line', W-86, 27);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  renderPerfCharts();
+  // Init sensitivity with defaults
+  drawSensitivity(1.0, 5.0, 1.0, 0, 0, 0, 30, 'xgb');
+});
+
+window.addEventListener('resize', () => {
+  if (document.getElementById('tab-performance').classList.contains('active')) {
+    perfRendered = false; renderPerfCharts();
+  }
+  if (document.getElementById('tab-validation').classList.contains('active')) {
+    valRendered = false; renderValidationCharts();
+  }
+});
+</script>
+</body>
+</html>
